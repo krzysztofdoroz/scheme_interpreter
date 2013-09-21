@@ -1,5 +1,9 @@
 package scheme.parser
 
+import scheme.utils.Atom
+import scheme.utils.IntConst
+import scheme.utils._
+
 object Parser {
 
   def parse(input: List[String]): List[Any] = {
@@ -15,12 +19,26 @@ object Parser {
       case ("(" :: it, _, _, _) => parse(it, List(), if (currentList.isEmpty) { stack } else { stack :+ currentList }, result)
       case (")" :: it, _, Nil, _) => currentList
       case (")" :: it, _, _, _) => parse(input.tail, stack.last :+ currentList, stack.take(stack.size - 1), result)
-      case _ => parse(input.tail, currentList :+ input.head, stack, result)
+      case _ => parse(input.tail, currentList :+ createAtom(input.head), stack, result)
     }
   }
   
   def tokenize(s : String) = {
     s.replace("(", " ( ").replace(")", " ) ").split("\\s+").toList
   }
+
+  def createAtom(x: Any): Atom =
+
+    x match {
+      case "define" => new Define()
+      case x : String => {
+        try {
+          new IntConst(x.toInt)
+        } catch  {
+          case _ => new VarName(x)
+		}
+      } 
+    }
+  
   
 }
