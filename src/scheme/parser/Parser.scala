@@ -34,11 +34,22 @@ object Parser {
       case x : String => {
         try {
           new IntConst(x.toInt)
-        } catch  {
-          case _ => new VarName(x)
+        } catch {
+          case _ => varOrProc(x)
 		}
       } 
     }
+  
+  def varOrProc(name : String) = {
+    val registeredProcs = Set("+")
+    
+    if (registeredProcs.contains(name)){
+      new ProcName(name)
+    } else {
+      new VarName(name)
+    }
+    
+  }
   
   
 }

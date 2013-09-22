@@ -26,7 +26,9 @@ object Interpreter {
       case IntConst(x)::nil => {
         x
       }
-      case _ => println("WTF")
+      case ProcName(proc)::args => {
+        Procedures.apply(proc, args)
+      }
     }
     
   }
