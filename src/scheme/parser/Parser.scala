@@ -31,6 +31,7 @@ object Parser {
 
     x match {
       case "define" => new Define()
+      case "lambda" => new Lambda()
       case x : String => {
         try {
           new IntConst(x.toInt)
