@@ -5,10 +5,17 @@ import scheme.utils.VarName
 import scheme.utils.IntConst
 import java.util.HashMap
 import scheme.utils._
+import scheme.utils.IntConst
 
 object Interpreter {
 
   val env = new HashMap[String, Any]
+  val procs = Map[String, Function2[Int, Int, Int]](
+    "+" -> new Function2[Int, Int, Int] {
+      def apply(a: Int, b: Int): Int = {
+        a + b
+      }
+    })
   
   def eval(input : List[Any], env : HashMap[String, Any]): Any = {
     
@@ -19,6 +26,9 @@ object Interpreter {
         env.put(x, eval(exp, env))
         println("ENV:" + env)
       } 
+      case Quote()::it => {
+        it
+      }
       case VarName(x)::Nil => {
         println("getting var from env:" + x)
         env.get(x)
@@ -38,9 +48,19 @@ object Interpreter {
         //	 println("no match, WTF")
           
           (env.get(proc), unpackList(args)) match {
-            case (f : Function1[Any ,Any], List(IntConst(x))) => {
-              println("applying:" + x)  
-              f.apply(x)
+            case (f : LambdaDef, List(IntConst(x))) => {
+              println("applying:" + x)
+              env.put(f.parameters(0).x, x)
+              println("calling proc with ENV=" + env)
+              
+              val updated : List[Any] = f.expr.flatMap(_  match {
+                case v : VarName => List(IntConst(env.get(v.x).asInstanceOf[Int]))
+                case d : Any => List(d) 
+              })
+              
+              println("updated:" + updated)
+              
+              eval(updated, env)
             	
             }
             case _ => println("no match, WTF:" + env.get(proc))
@@ -49,16 +69,18 @@ object Interpreter {
         	Procedures.apply(proc, args)
         }
       }
-      case Lambda()::List(VarName(x))::it => {
+      case Lambda()::it => {
         
         println("for fuck's sake:" + it)
-       // val unpackedList = unpackList(it)
-       // val (VarName(x)) = (unpackList(unpackedList.head))
-      //   val (VarName(x), definition) = (head, unpackedList.tail)
+ 
+        return (it.head, it.tail) match {
+          case (params: List[VarName], body: List[Any]) => LambdaDef(params, unpackList(body)) 
+        }
         
-         
+        
+        
          println("store a new proc" + env)
-         createFunction(it)
+      //   createFunction(it)
       }
       case List(x) => {
         println("lambda:" + x)
@@ -90,14 +112,21 @@ object Interpreter {
     
     val ProcName(op)::VarName(n)::IntConst(v)::Nil = unpackList(input)
     
-    new Function1[Int, Int] {
-      def apply(x : Int): Int = {
+    op match {
+    	case "+" => {
+    		 new Function1[Int, Int] {
+    			 def apply(x : Int): Int = {
         
-        println("applying function for:" + op + "," + List(IntConst(x),IntConst(v)))
+    		     println("applying function for:" + op + "," + List(IntConst(x),IntConst(v)))
         
-        Procedures.apply(op, List(IntConst(x),IntConst(v)))
-      }
+                 Procedures.apply(op, List(IntConst(x),IntConst(v)))
+    			 }
+    		 }
+    	} 
     }
+    
+    
+   
   }
   
   def singleRunWithEnv(input : String): Any = {

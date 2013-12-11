@@ -32,6 +32,7 @@ object Parser {
     x match {
       case "define" => new Define()
       case "lambda" => new Lambda()
+      case "quote" => new Quote()
       case x : String => {
         try {
           new IntConst(x.toInt)
@@ -42,7 +43,7 @@ object Parser {
     }
   
   def varOrProc(name : String) = {
-    val registeredProcs = Set("+")
+    val registeredProcs = Set("+", "<")
     
     if (registeredProcs.contains(name)){
       new ProcName(name)
