@@ -12,30 +12,52 @@ import scala.util.parsing.combinator._
 object Interpreter {
 
   val env = new HashMap[String, Any]
-  val procs = Map[String, Function2[Int, Int, Int]](
-    "+" -> new Function2[Int, Int, Int] {
-      def apply(a: Int, b: Int): Int = {
-        a + b
+      
+  def applyFunction(n : VarName, params : List[Any]): Any = {
+    
+    val evaluatedParams : List[IntConst] = evaluateParams(params)
+    
+    println("APPLY:" + n + "," + params)
+    
+    if (env.containsKey(n.x)) {
+    	env.get(n.x) match {
+    	  case LambdaDef(symbols, FunctionCall(n, pars)) => {
+    	    
+    	    applyFunction(n, evalPassedParams(symbols, params, pars))
+    	  }
+    	}
+    } else {
+    
+    n.x match {
+      case "<" => evaluatedParams(0).x < evaluatedParams(1).x
+      case "+" => evaluatedParams.foldLeft(0)((acc, x) => acc + x.x)
+    }
+    }
+  }  
+  
+  def evalPassedParams(symbols: List[VarName], values : List[Any], args: List[Any]) ={
+    
+    val symbolValueMapping = Map(symbols.map(_.x).zip(values) : _*)
+    
+    val symbolsToBeEvaluated = args.map(_ match {
+      case VarName(x) => symbolValueMapping.get(x) match  {
+        case Some(IntConst(y)) => IntConst(y)
       }
+      case i => i
     })
     
-  def applyFunction(n : VarName, params : List[Any]) = {
-    
-    val evaluatedParams : List[IntConst] = params.map(x => x match {
+    symbolsToBeEvaluated
+  }
+  
+  def evaluateParams(params: List[Any]) : List[IntConst] = {
+    params.map(x => x match {
       case VarName(v) => env.get(v) match {
         					case i : Int => IntConst(i)
         					case _ => throw new RuntimeException("no such value!!!")
       					} 
       case a @ IntConst(y) => a
     })
-    
-    n.x match {
-      case "<" => evaluatedParams(0).x < evaluatedParams(1).x
-    }
-    
-  }  
-    
-    
+  }
   
   def eval(input : Any, env : HashMap[String, Any]): Any = {
     
@@ -104,15 +126,18 @@ object Interpreter {
         	Procedures.apply(proc, args)
         }
       }
+      case lambdaDef @ LambdaDef(params, expr) => {
+    	  lambdaDef
+      }
       case Lambda()::it => {
         
         println("for fuck's sake:" + it)
- 
+ /*
         return (it.head, it.tail) match {
           case (params: List[VarName], body: List[Any]) => LambdaDef(params, unpackList(body)) 
         }
         
-        
+   */     
         
          println("store a new proc" + env)
       //   createFunction(it)
@@ -130,7 +155,6 @@ object Interpreter {
     }
     
   }
-  
   def unpackList(in : List[Any]) : List[Any] = {
     println("unpacking list:" + in)
     in match {
@@ -159,14 +183,11 @@ object Interpreter {
     		 }
     	} 
     }
-    
-    
-   
-  }
+}
+  
   
   def singleRunWithEnv(input : String): Any = {
    // eval(Parser.parse(Parser.tokenize(input)), env)
-    println("NEW PARSER:")
     eval(SchemeParser.parse2(input), env)
     
   }
