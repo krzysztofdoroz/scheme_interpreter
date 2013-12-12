@@ -6,6 +6,8 @@ import scheme.utils.IntConst
 import java.util.HashMap
 import scheme.utils._
 import scheme.utils.IntConst
+import scheme.parser.SchemeParser
+import scala.util.parsing.combinator._
 
 object Interpreter {
 
@@ -17,19 +19,18 @@ object Interpreter {
       }
     })
   
-  def eval(input : List[Any], env : HashMap[String, Any]): Any = {
+  def eval(input : Any, env : HashMap[String, Any]): Any = {
     
     input match {
-      case Define()::it => {
-        val (VarName(x), exp) = (it.head, it.tail)
-        
+      case Define(VarName(x), exp) => {
+        //val () = (it.head, it.tail)
         env.put(x, eval(exp, env))
         println("ENV:" + env)
       } 
       case Quote()::it => {
         it
       }
-      case VarName(x)::Nil => {
+      case VarName(x) => {
         println("getting var from env:" + x)
         env.get(x)
       } 
@@ -37,7 +38,7 @@ object Interpreter {
         println("calling fun from env:" + x)
         eval(List(ProcName("inc"),args), env)
       }
-      case IntConst(x)::nil => {
+      case IntConst(x) => {
         x
       }
       case ProcName(proc)::args => {
@@ -52,15 +53,15 @@ object Interpreter {
               println("applying:" + x)
               env.put(f.parameters(0).x, x)
               println("calling proc with ENV=" + env)
-              
+            /*  
               val updated : List[Any] = f.expr.flatMap(_  match {
                 case v : VarName => List(IntConst(env.get(v.x).asInstanceOf[Int]))
                 case d : Any => List(d) 
               })
               
               println("updated:" + updated)
-              
-              eval(updated, env)
+              */
+              //eval(updated, env)
             	
             }
             case _ => println("no match, WTF:" + env.get(proc))
@@ -130,7 +131,10 @@ object Interpreter {
   }
   
   def singleRunWithEnv(input : String): Any = {
-    eval(Parser.parse(Parser.tokenize(input)), env)
+   // eval(Parser.parse(Parser.tokenize(input)), env)
+    println("NEW PARSER:")
+    eval(SchemeParser.parse2(input), env)
+    
   }
   
   
@@ -141,6 +145,9 @@ object Interpreter {
 	  while (true) {
 	    val input = readLine
 	    println(eval(Parser.parse(Parser.tokenize(input)), env))
+	    println("NEW PARSER:")
+	    println(eval(SchemeParser.parse2(input), env))
+	    
 	    //println("ENV:" + env)
 	  }
   }
