@@ -18,18 +18,52 @@ object Interpreter {
         a + b
       }
     })
+    
+  def applyFunction(n : VarName, params : List[Any]) = {
+    
+    val evaluatedParams : List[IntConst] = params.map(x => x match {
+      case VarName(v) => env.get(v) match {
+        					case i : Int => IntConst(i)
+        					case _ => throw new RuntimeException("no such value!!!")
+      					} 
+      case a @ IntConst(y) => a
+    })
+    
+    n.x match {
+      case "<" => evaluatedParams(0).x < evaluatedParams(1).x
+    }
+    
+  }  
+    
+    
   
   def eval(input : Any, env : HashMap[String, Any]): Any = {
     
     input match {
-      case Define(VarName(x), exp) => {
-        //val () = (it.head, it.tail)
-        env.put(x, eval(exp, env))
+      case Define(VarName(x), expr) => {
+        env.put(x, eval(expr, env))
         println("ENV:" + env)
       } 
-      case Quote()::it => {
-        it
+      case Quote(expr) => {
+        
+        println("we have a quote")
+        
+        expr
       }
+      
+      case If(cond, then, alt) => {
+        
+        println("COND:" + cond)
+        
+        eval(cond,env) match {
+          case true => then
+          case false => alt
+        }
+          
+      }
+      case FunctionCall(name, args) => {
+        applyFunction(name, args)
+      } 
       case VarName(x) => {
         println("getting var from env:" + x)
         env.get(x)

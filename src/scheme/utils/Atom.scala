@@ -7,5 +7,7 @@ case class VarName(x: String) extends Atom;
 case class ProcName(x: String) extends Atom;
 case class Lambda() extends Atom;
 case class LambdaDef(parameters: List[VarName], expr: Any) extends Atom;
-case class Quote() extends Atom;
-case class If() extends Atom;
+case class Quote(expr : Any) extends Atom;
+case class If(cond : Any, then : Any, alt : Any) extends Atom;
+case class StringConst(x : String) extends Atom;
+case class FunctionCall(n : VarName, params: List[Any])
