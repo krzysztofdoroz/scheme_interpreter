@@ -9,11 +9,11 @@ class FibTest {
   @Test
   def testFac() = {
    val defineFac = "(define fac (lambda (n) (if (< n 2) 1 (* n (fact (- n 1))))))"
-   val callFac = "(fac 7)"		
+   val callFac = "(fac 5)"		
       
     Interpreter.singleRunWithEnv(defineFac)  
       
-    Assert.assertEquals(8, Interpreter.singleRunWithEnv(callFac))
+    Assert.assertEquals(120, Interpreter.singleRunWithEnv(callFac))
   }
   
 }
