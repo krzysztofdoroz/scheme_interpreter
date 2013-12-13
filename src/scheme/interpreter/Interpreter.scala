@@ -23,14 +23,15 @@ object Interpreter {
       env.get(n.x) match {
         case LambdaDef(symbols, FunctionCall(n, pars)) => {
 
-          return evalPassedParams(symbols, params, pars)
+          return FunctionCall(n,evalPassedParams(symbols, params, pars))
         } 
-        case LambdaDef(symbols, exp) => return exp 
+        case LambdaDef(symbols, exp) =>  return exp 
       }
     } else {
 
+      println("built in functions:" + n.x)
    
-      n.x match {
+     return n.x match {
         case "<" => evaluatedParams(0).x < evaluatedParams(1).x
         case "+" => evaluatedParams.foldLeft(0)((acc, x) => acc + x.x)
       }
@@ -138,27 +139,14 @@ object Interpreter {
         case lambdaDef @ LambdaDef(params, expr) => {
           return lambdaDef
         }
-        case Lambda() :: it => {
-
-          println("for fuck's sake:" + it)
-          /*
-        return (it.head, it.tail) match {
-          case (params: List[VarName], body: List[Any]) => LambdaDef(params, unpackList(body)) 
-        }
-        
-   */
-
-          println("store a new proc" + env)
-          //   createFunction(it)
-        }
-        case List(x) => {
+         case List(x) => {
           println("lambda:" + x)
           x match {
             case y: List[Any] => eval(y, env)
           }
         }
         case sth @ _ => {
-          println("couldn't parse:" + sth)
+          return sth
         }
 
       }
