@@ -13,31 +13,38 @@ object Interpreter {
 
   var env = new HashMap[String, Any]
 
-  def applyFunction(n: VarName, params: List[Any]): Any = {
+  def applyFunction(n: VarName, params: List[Any], context : HashMap[String, Any]): Any = {
 
       println("APPLY:" + n + "," + params + ", ENV=" + env)
 
-    val evaluatedParams: List[IntConst] = evaluateParams(params)
-    
+       context.putAll(env)
+       val newContext = new HashMap[String, Any]
+      newContext.putAll(env)
   
+    val evaluatedParams: List[IntConst] = evaluateParams(params, context)
+
+  //  var context = new HashMap[String, Any]()
+   
     if (env.containsKey(n.x)) {
       env.get(n.x) match {
-        case LambdaDef(symbols, FunctionCall(n, pars)) => {
+        case LambdaDef(symbols, FunctionCall(n, pars, con)) => {
 
-          return FunctionCall(n,evalPassedParams(symbols, params, pars))
+          return FunctionCall(n,evalPassedParams(symbols, params, pars),con)
         } 
         case LambdaDef(symbols, exp) => {
 
-        var context = new HashMap[String, Any]()
-        context.putAll(env)
-          
           val symbolToValMap : List[(VarName,Any)] = symbols.zip(params)
          symbolToValMap.foreach(a => a match {
-           case (VarName(n), IntConst(x)) => context.put(n ,  x)  
-          case (VarName(n), fc @ FunctionCall(f,args)) => env.put(n, eval(fc, env)) 
+           case (VarName(n), IntConst(x)) => newContext.put(n ,  x)  
+          case (VarName(n), fc @ FunctionCall(f,args,con)) => newContext.put(n, eval(fc, context)) 
+       //   case _ => 
          } )
           
-          return exp
+         println("EXP:" + exp)
+         
+     //    return exp
+        return eval(exp,newContext) 
+     
         } 
       }
     } else {
@@ -48,7 +55,7 @@ object Interpreter {
         case "<" => evaluatedParams(0).x < evaluatedParams(1).x
         case "+" => evaluatedParams.foldLeft(0)((acc, x) => acc + x.x)
         case "-" => evaluatedParams.foldRight(0)((x, acc) => x.x - acc)
-        case "*" => evaluatedParams.foldLeft(0)((acc, x) => acc * x.x)
+        case "*" => evaluatedParams.foldLeft(1)((acc, x) => acc * x.x)
         case "=" => evaluatedParams(0).x == evaluatedParams(1).x
         
       }
@@ -69,24 +76,24 @@ object Interpreter {
     symbolsToBeEvaluated
   }
 
-  def evaluateParams(params: List[Any]): List[IntConst] = {
+  def evaluateParams(params: List[Any], context : HashMap[String, Any]): List[IntConst] = {
     params.map(x => x match {
-      case VarName(v) => env.get(v) match {
+      case VarName(v) => context.get(v) match {
         case i: Int => IntConst(i)
         case _ => throw new RuntimeException("no such value!!!:" + v)
       }
       case a @ IntConst(y) => a
-      case fc @ FunctionCall(n,args) => eval(fc, env) match {
+      case fc @ FunctionCall(n,args,con) => eval(fc, context) match {
         case i : Int => IntConst(i)
       }
       case a @ _ => throw new RuntimeException("can't eval parameters:" + a)
     })
   }
 
-  def eval(input: Any, env: HashMap[String, Any]): Any = {
+  def eval(input: Any, context: HashMap[String, Any]): Any = {
 
     var expr = input
-    
+    var env = context
     while (true) {
       
 
@@ -114,8 +121,9 @@ object Interpreter {
           }
 
         }
-        case FunctionCall(name, args) => {
-         expr = applyFunction(name, args)
+        case FunctionCall(name, args, context) => {
+          
+         expr = applyFunction(name, args, env)
         }
         case VarName(x) => {
           println("getting var from env:" + x)
