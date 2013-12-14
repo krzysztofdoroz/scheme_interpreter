@@ -11,21 +11,34 @@ import scala.util.parsing.combinator._
 
 object Interpreter {
 
-  val env = new HashMap[String, Any]
+  var env = new HashMap[String, Any]
 
   def applyFunction(n: VarName, params: List[Any]): Any = {
 
+      println("APPLY:" + n + "," + params + ", ENV=" + env)
+
     val evaluatedParams: List[IntConst] = evaluateParams(params)
     
-    println("APPLY:" + n + "," + params + ", ENV=" + env)
-
+  
     if (env.containsKey(n.x)) {
       env.get(n.x) match {
         case LambdaDef(symbols, FunctionCall(n, pars)) => {
 
           return FunctionCall(n,evalPassedParams(symbols, params, pars))
         } 
-        case LambdaDef(symbols, exp) =>  return exp 
+        case LambdaDef(symbols, exp) => {
+
+        var context = new HashMap[String, Any]()
+        context.putAll(env)
+          
+          val symbolToValMap : List[(VarName,Any)] = symbols.zip(params)
+         symbolToValMap.foreach(a => a match {
+           case (VarName(n), IntConst(x)) => context.put(n ,  x)  
+          case (VarName(n), fc @ FunctionCall(f,args)) => env.put(n, eval(fc, env)) 
+         } )
+          
+          return exp
+        } 
       }
     } else {
 
@@ -34,6 +47,10 @@ object Interpreter {
      return n.x match {
         case "<" => evaluatedParams(0).x < evaluatedParams(1).x
         case "+" => evaluatedParams.foldLeft(0)((acc, x) => acc + x.x)
+        case "-" => evaluatedParams.foldRight(0)((x, acc) => x.x - acc)
+        case "*" => evaluatedParams.foldLeft(0)((acc, x) => acc * x.x)
+        case "=" => evaluatedParams(0).x == evaluatedParams(1).x
+        
       }
     }
   }
@@ -59,6 +76,10 @@ object Interpreter {
         case _ => throw new RuntimeException("no such value!!!:" + v)
       }
       case a @ IntConst(y) => a
+      case fc @ FunctionCall(n,args) => eval(fc, env) match {
+        case i : Int => IntConst(i)
+      }
+      case a @ _ => throw new RuntimeException("can't eval parameters:" + a)
     })
   }
 
@@ -138,12 +159,6 @@ object Interpreter {
         }
         case lambdaDef @ LambdaDef(params, expr) => {
           return lambdaDef
-        }
-         case List(x) => {
-          println("lambda:" + x)
-          x match {
-            case y: List[Any] => eval(y, env)
-          }
         }
         case sth @ _ => {
           return sth

@@ -8,7 +8,7 @@ class FibTest {
 
   @Test
   def testFac() = {
-   val defineFac = "(define fac (lambda (n) (if (< n 2) 1 (* n (fact (- n 1))))))"
+   val defineFac = "(define fac (lambda (n) (if (< n 2) 1 (* n (fac (- n 1))))))"
    val callFac = "(fac 5)"		
       
     Interpreter.singleRunWithEnv(defineFac)  
