@@ -136,35 +136,6 @@ object Interpreter {
         case IntConst(x) => {
           return x
         }
-        case ProcName(proc) :: args => {
-
-          println("calling proc with:" + proc + "::" + args)
-
-          if (env.get(proc) != null) {
-            //	 println("no match, WTF")
-
-            (env.get(proc), unpackList(args)) match {
-              case (f: LambdaDef, List(IntConst(x))) => {
-                println("applying:" + x)
-                env.put(f.parameters(0).x, x)
-                println("calling proc with ENV=" + env)
-                /*  
-              val updated : List[Any] = f.expr.flatMap(_  match {
-                case v : VarName => List(IntConst(env.get(v.x).asInstanceOf[Int]))
-                case d : Any => List(d) 
-              })
-              
-              println("updated:" + updated)
-              */
-                //eval(updated, env)
-
-              }
-              case _ => println("no match, WTF:" + env.get(proc))
-            }
-          } else {
-            Procedures.apply(proc, args)
-          }
-        }
         case lambdaDef @ LambdaDef(params, expr) => {
           return lambdaDef
         }
@@ -176,40 +147,9 @@ object Interpreter {
     }
 
   }
-  def unpackList(in: List[Any]): List[Any] = {
-    println("unpacking list:" + in)
-    in match {
-      case List(x) => {
-        x match {
-          case y: List[Any] => y
-        }
-      }
-    }
-  }
-
-  def createFunction(input: List[Any]): Function[_ <: Any, _ <: Any] = {
-    println("creating function from:" + input)
-
-    val ProcName(op) :: VarName(n) :: IntConst(v) :: Nil = unpackList(input)
-
-    op match {
-      case "+" => {
-        new Function1[Int, Int] {
-          def apply(x: Int): Int = {
-
-            println("applying function for:" + op + "," + List(IntConst(x), IntConst(v)))
-
-            Procedures.apply(op, List(IntConst(x), IntConst(v)))
-          }
-        }
-      }
-    }
-  }
 
   def singleRunWithEnv(input: String): Any = {
-    // eval(Parser.parse(Parser.tokenize(input)), env)
     eval(SchemeParser.parse2(input), env)
-
   }
 
   def run() = {
@@ -219,10 +159,8 @@ object Interpreter {
     while (true) {
       val input = readLine
       println(eval(Parser.parse(Parser.tokenize(input)), env))
-      println("NEW PARSER:")
       println(eval(SchemeParser.parse2(input), env))
 
-      //println("ENV:" + env)
     }
   }
 
